@@ -1,5 +1,5 @@
 <?php session_start();
-//error_reporting(0);
+error_reporting(0);
 // Database Connection
 include('includes/config.php');
 //Validating Session
@@ -8,23 +8,20 @@ if(strlen($_SESSION['aid'])==0)
 header('location:index.php');
 }
 else{
+//Code For Deletion the classes
+if($_GET['action']=='delete'){
+$tid=intval($_GET['bid']);
 
-if(isset($_POST['submit'])){
-$bid=intval($_GET['bid']);
-$estatus=$_POST['status'];
-$oremark=$_POST['officialremak'];
-
-$query=mysqli_query($con,"update tblbookings set AdminRemark='$oremark',BookingStatus='$estatus' where ID='$bid'");
-
+$query=mysqli_query($con,"delete from tblboat where ID='$bid'");
 if($query){
-echo "<script>alert('Booking Details Updated   successfully.');</script>";
-echo "<script type='text/javascript'> document.location = 'all-booking.php'; </script>";
+echo "<script>alert('Boat details deleted successfully.');</script>";
+echo "<script type='text/javascript'> document.location = 'manage-boat.php'; </script>";
 } else {
 echo "<script>alert('Something went wrong. Please try again.');</script>";
 }
 
-
 }
+
 
   ?>
 <!DOCTYPE html>
@@ -32,7 +29,7 @@ echo "<script>alert('Something went wrong. Please try again.');</script>";
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Boat Booking System  | Booking Details</title>
+  <title>Boat Booking System  | Manage Boat</title>
 
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -60,12 +57,12 @@ echo "<script>alert('Something went wrong. Please try again.');</script>";
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Booking Details</h1>
+            <h1>Manage Boat</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="dashboard.php">Home</a></li>
-              <li class="breadcrumb-item active">Booking Details</li>
+              <li class="breadcrumb-item active">Manage Boat</li>
             </ol>
           </div>
         </div>
@@ -82,82 +79,42 @@ echo "<script>alert('Something went wrong. Please try again.');</script>";
 
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">Booking Details</h3>
+                <h3 class="card-title">Manage Boat</h3>
               </div>
               <!-- /.card-header -->
               <div class="card-body">
                 <table id="example1" class="table table-bordered table-striped">
-       
+                  <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Boat Title</th>
+                    <th>Price</th>
+                    <th>Added By</th>
+                    <th>Creation Date</th>
+                    <th>Action</th>
+                  </tr>
+                  </thead>
                   <tbody>
-<?php $bid=intval($_GET['bid']);
-$query=mysqli_query($con,"select tblbookings.*, tblboat.ID,tblboat.BoatName from tblbookings join tblboat on tblboat.ID=tblbookings.BoatID  where tblbookings.ID='$bid'");
+<?php $query=mysqli_query($con,"select AdminName,tblboat.ID as bid,tblboat.BoatName,tblboat.Price,tblboat.Size,tblboat.CreationDate from tblboat
+left join tbladmin on tbladmin.ID=tblboat.AddedBy");
 $cnt=1;
 while($result=mysqli_fetch_array($query)){
 ?>
 
-
-       <tr>
-                  <th>Booking Number</th>
-                    <td colspan="3"><?php echo $result['BookingNumber']?></td>
-                  </tr>
-
                   <tr>
-                  <th> Name</th>
-                    <td><?php echo $result['FullName']?></td>
-                    <th>Email Id</th>
-                   <td> <?php echo $result['EmailId']?></td>
+                    <td><?php echo $cnt;?></td>
+                    <td><?php echo $result['BoatName']?> (<?php echo $result['Size']?>)</td>
+                     <td><?php echo $result['Price']?></td>
+                    <td><?php echo $result['AdminName']?></td>
+                   <td><?php echo $result['CreationDate']?></td>
+                    <th> 
+     <a href="manage-boat.php?action=delete&&bid=<?php echo $result['bid']; ?>" style="color:red;" title="Delete this record" onclick="return confirm('Do you really want to delete this record?');"><i class="fa fa-trash" aria-hidden="true"></i> </a><a href="edit-boat.php?bid=<?php echo $result['bid']; ?>" style="color:blue;"><i class="fa fa-eye" aria-hidden="true"></i> </a>
+ </th>
                   </tr>
-                  <tr>
-                    <th> Mobile No</th>
-                    <td><?php echo $result['PhoneNumber']?></td>
-                    <th>No of Peoples</th>
-                    <td><?php echo $result['NumnerofPeople']?></td>
-                  </tr>
-                  <tr>
-                    <th>Bookingd Date From - Bookingd Date To</th>
-                   <td><?php echo $result['BookingDateFrom']?> to  <?php echo $result['BookingDateTo']?></td>
-                   <th>Booking Time</th>
-                   <td><?php echo $result['BookingTime']?></td>
-                 </tr>
-                 <tr>
-                  <th>Posting Date</th>
-                    <td ><?php echo $result['postingDate']?></td>
-                    <th>Boat Name</th>
-                    <td ><?php echo $result['BoatName']?>  <a href='edit-boat.php?bid=<?php echo $result['BoatID']; ?>'> View Details</a></td>
-                  </tr>
-
- 
-
-<?php if($result['BookingStatus']!=''):?>
-            <tr>
-                  <th>Booking  Status</th>
-                    <td><?php if($result['BookingStatus']==''): ?>
-<span class="badge bg-warning text-dark">Not Processed Yet</span>
-                  <?php elseif($result['BookingStatus']=='Accepted'): ?>
-                    <span class="badge bg-success">Accepted</span>
-                    <?php elseif($result['Rejected']=='Rejected'): ?>
-                      <span class="badge bg-danger">Rejected</span>
-                    <?php endif;?></td>
-                    <th>Updation Date</th>
-                    <td><?php echo $result['UpdationDate']?></td>
-                  </tr>
-
-      <tr>
-                  <th> Remark</th>
-                    <td colspan="3"><?php echo $result['AdminRemark']?></td>
-                  </tr>
-<?php endif;?>
-<?php if($result['BookingStatus']==''):?>
-<tr>
-  <td colspan="4" style="text-align:center;">
-<button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">Take Action</button>
-</td>
-<?php endif;?>
-
          <?php $cnt++;} ?>
              
                   </tbody>
-     
+        
                 </table>
               </div>
               <!-- /.card-body -->
@@ -175,45 +132,13 @@ while($result=mysqli_fetch_array($query)){
   <!-- /.content-wrapper -->
 <?php include_once('includes/footer.php');?>
 
-
+  <!-- Control Sidebar -->
+  <aside class="control-sidebar control-sidebar-dark">
+    <!-- Control sidebar content goes here -->
+  </aside>
+  <!-- /.control-sidebar -->
 </div>
 <!-- ./wrapper -->
-
-
-<div id="myModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Update Booking Satus</h4>
-      </div>
-      <div class="modal-body">
-        <form name="takeaction" method="post">
-
-          <p><select class="form-control" name="status" id="status" required>
-            <option value="">Select Booking Status</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Rejected">Rejected</option>
-          </select></p>
-
-        <p><textarea class="form-control" name="officialremak" placeholder="Official Remark" rows="5" required></textarea></p>
-        <input type="submit" class="btn btn-primary" name="submit" value="update">
-
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-
-
-
 
 <!-- jQuery -->
 <script src="plugins/jquery/jquery.min.js"></script>
@@ -253,22 +178,6 @@ while($result=mysqli_fetch_array($query)){
       "responsive": true,
     });
   });
-</script>
-<script type="text/javascript">
-
-  //For report file
-  $('#rtable').hide();
-  $(document).ready(function(){
-  $('#status').change(function(){
-  if($('#status').val()=='Accepted')
-  {
-  $('#rtable').show();
-  jQuery("#table").prop('required',true);  
-  }
-  else{
-  $('#rtable').hide();
-  }
-})}) 
 </script>
 </body>
 </html>
